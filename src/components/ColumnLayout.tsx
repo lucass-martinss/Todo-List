@@ -1,36 +1,41 @@
-import React, { useState } from 'react';
-import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Alert from '@mui/material/Alert';
-import Collapse from '@mui/material/Collapse';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { useDispatch } from 'react-redux';
-import { Droppable, Draggable } from 'react-beautiful-dnd';
-import { StoreDispatch } from '../redux/store';
-import { IColumnLayoutProps } from '../types';
+import React, { useState } from "react";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import List from "@mui/material/List";
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
+import Alert from "@mui/material/Alert";
+import Collapse from "@mui/material/Collapse";
+import { useDispatch } from "react-redux";
+import { Droppable } from "react-beautiful-dnd";
+import { StoreDispatch } from "../redux/store";
+import { IColumnLayoutProps } from "../types";
+import ClearIcon from '@mui/icons-material/Clear';
+import { OutlinedInput } from "@mui/material";
+import "./columns/components.css";
+
+import NoteCard from "./NoteCard";
+import { IconButton } from "@mui/material";
 
 const ColumnLayout: React.FC<IColumnLayoutProps> = ({
-  labelText,
-  addHandler,
   removeHandler,
   completedHandler,
-  selectorState,
-  droppableId,
+  addHandler,
   updateTextShowed,
+  updateTextNote,
+  updateTitle,
+  cardList: selectorState,
+  labelText,
+  droppableId,
+  title,
 }) => {
   const [isError, setIsError] = useState({
     isShow: false,
-    text: '',
+    text: "",
   });
-
-  const [textDescription, setTextDescription] = useState('');
+  const [open, setOpen] = useState(false)
+  const [insertCard, setInsertCard] = useState(false);
+  const [textDescription, setTextDescription] = useState("");
   const dispatch = useDispatch<StoreDispatch>();
 
   const handleOnChange = ({
@@ -42,19 +47,31 @@ const ColumnLayout: React.FC<IColumnLayoutProps> = ({
       isShow: value.length > 200,
       text:
         value.length > 200
-          ? 'The input value cannot be more than 200 characters'
-          : '',
+          ? "The input value cannot be more than 200 characters"
+          : "",
     });
   };
 
   const handleOnBlur = () => {
     setIsError({ ...isError, isShow: false });
-  };
+    setInsertCard(true);
 
+  };
+  const handleInsertCard = () => {
+    setInsertCard(true);
+
+  };
+  const handleTitleClick = () => {
+    setOpen(true);
+  }
+  const handleEscapeClick = () => {
+    setInsertCard(false);
+  }
   const handleOnClick = () => {
     if (!isError.isShow) {
       dispatch(addHandler(textDescription));
-      setTextDescription('');
+      setTextDescription("");
+      setInsertCard(false);
     }
   };
 
@@ -62,7 +79,7 @@ const ColumnLayout: React.FC<IColumnLayoutProps> = ({
     target,
     key,
   }: React.KeyboardEvent<HTMLInputElement>) => {
-    if (key === 'Enter') {
+    if (key === "Enter") {
       if (
         (target as HTMLInputElement).value.length > 0 &&
         (target as HTMLInputElement).value.length <= 200
@@ -71,57 +88,54 @@ const ColumnLayout: React.FC<IColumnLayoutProps> = ({
       } else {
         setIsError({
           isShow: true,
-          text: 'The input value cannot be empty',
+          text: "The input value cannot be empty",
         });
       }
     }
+
   };
 
   return (
-    <Box borderRadius={1} width='100%' sx={{ boxShadow: 2, p: 3 }}>
-      <TextField
-        fullWidth
-        label={labelText}
-        onChange={handleOnChange}
-        onBlur={handleOnBlur}
-        onKeyDown={handleInputKeyDown}
-        value={textDescription}
-        variant='outlined'
-        size='small'
-      />
+    <Box
+      className="column"
+      borderRadius={1}
+      width="100%"
+      sx={{ boxShadow: 2, p: 3 }}
+    >
+      {open
+        ? <OutlinedInput
+          className="columnTitle"
+          defaultValue={title}
 
+          inputRef={input => input && input.focus()}
+          onBlur={event => {
+           dispatch(
+           updateTitle(event.target.value)) 
+           setOpen(false) 
+           }
+          }
+        />
+
+        : <Button
+          fullWidth
+          onClick={handleTitleClick}>{title}</Button>}
+      
       <Collapse in={isError.isShow}>
-        <Alert severity='error' sx={{ my: 1 }}>
+        <Alert severity="error" sx={{ my: 1 }}>
           {isError.text}
         </Alert>
       </Collapse>
 
-      <Box width='100%' display='flex' justifyContent='center'>
-        <Button
-          size='medium'
-          sx={{ my: 1, maxWidth: 200 }}
-          variant='outlined'
-          color='primary'
-          fullWidth
-          onClick={handleOnClick}
-          onKeyDown={({ key }) => key === 'Enter' && handleOnClick()}
-          disabled={
-            textDescription.length === 0 || textDescription.length > 200
-          }
-        >
-          Add Item
-        </Button>
-      </Box>
       <Droppable droppableId={droppableId}>
         {(provided) => (
           <List
             sx={{
-              minHeight: '300px',
+              minHeight: "300px",
               li: {
-                flexDirection: 'column',
+                flexDirection: "column",
               },
-              '& .MuiListItemText-root': {
-                width: '100%',
+              "& .MuiListItemText-root": {
+                width: "100%",
               },
             }}
             ref={provided.innerRef}
@@ -129,107 +143,104 @@ const ColumnLayout: React.FC<IColumnLayoutProps> = ({
           >
             {selectorState.map(
               (
-                { id, text, isFinished, createdAt, updatedAt, isTextShowed },
+                {
+                  id,
+                  text,
+                  isFinished,
+                  createdAt,
+                  updatedAt,
+                  isTextShowed,
+                  noteText,
+                },
                 index: number
               ) => (
-                <Draggable key={id} draggableId={id} index={index}>
-                  {(provided, snapshot) => (
-                    <ListItem
-                      sx={{
-                        transition: '.3s ease background-color',
-                        color: snapshot.isDragging ? '#fff' : '#000',
-                        bgcolor: snapshot.isDragging ? '#000' : '#fff',
-                        position: 'relative',
-                        border: '1px solid #989898',
-                        my: 1,
-                        borderRadius: '3px',
-                        '& .MuiTypography-root': {
-                          display: 'flex',
-                          alignItems: 'center',
-                        },
-                      }}
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
-                      <ListItemText
-                        sx={{
-                          textDecoration: isFinished ? 'line-through' : 'none',
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        <IconButton
-                          sx={{ p: 1, mr: 1 }}
-                          onClick={() =>
-                            dispatch(
-                              updateTextShowed({
-                                id,
-                                isTextShowed: !isTextShowed,
-                              })
-                            )
-                          }
-                        >
-                          <ArrowDownwardIcon
-                            sx={{
-                              color: snapshot.isDragging ? '#fff' : '#000',
-                              transform: !isTextShowed ? 'rotate(180deg)' : '',
-                            }}
-                          />
-                        </IconButton>
-
-                        <Box
-                          component='span'
-                          width='100%'
-                          position='absolute'
-                          top='0'
-                          fontSize='.7rem'
-                        >
-                          {updatedAt ? 'Updated' : 'Created'} at:{' '}
-                          {updatedAt || createdAt}
-                        </Box>
-
-                        <Box component='span' width='100%'>
-                          {text}
-                        </Box>
-
-                        <Box display='flex' component='span'>
-                          <IconButton
-                            onClick={() => dispatch(removeHandler(id))}
-                          >
-                            <DeleteIcon
-                              sx={{
-                                color: snapshot.isDragging ? '#fff' : '#000',
-                              }}
-                            />
-                          </IconButton>
-                          <Checkbox
-                            edge='end'
-                            value={isFinished}
-                            checked={isFinished}
-                            inputProps={{ 'aria-label': 'controlled' }}
-                            onChange={() =>
-                              dispatch(
-                                completedHandler({
-                                  isFinished: !isFinished,
-                                  id,
-                                  updatedAt: new Date().toLocaleString(),
-                                })
-                              )
-                            }
-                          />
-                        </Box>
-                      </ListItemText>
-                      <Collapse in={isTextShowed}>
-                        You can add here some content{' '}
-                        <span role='img' aria-label='emoji'>
-                          😍
-                        </span>
-                      </Collapse>
-                    </ListItem>
-                  )}
-                </Draggable>
+                <NoteCard
+                  key={`note-card-${id}`}
+                  isFinished={isFinished}
+                  id={id}
+                  draggableId={id}
+                  text={text}
+                  noteText={noteText}
+                  checked={isFinished}
+                  createdAt={createdAt}
+                  updatedAt={updatedAt}
+                  isTextShowed={isTextShowed}
+                  index={index}
+                  removeHandler={() => removeHandler(id)}
+                  updateTextShowed={() =>
+                    dispatch(
+                      updateTextShowed({
+                        id,
+                        isTextShowed: !isTextShowed,
+                      })
+                    )
+                  }
+                  updateTextNote={(noteText: string) =>
+                    dispatch(
+                      updateTextNote({
+                        id,
+                        noteText,
+                      })
+                    )
+                  }
+                  completedHandler={() =>
+                    dispatch(
+                      completedHandler({
+                        isFinished: !isFinished,
+                        id,
+                        updatedAt: new Date().toLocaleString(),
+                      })
+                    )
+                  }
+                  value={updatedAt}
+                />
               )
             )}
+            {!insertCard
+              ?
+              <Button
+                fullWidth
+                endIcon={<AddOutlinedIcon />}
+                color="secondary"
+                onClick={handleInsertCard}>
+                Add a card
+              </Button>
+
+              : <>
+                <TextField
+
+                  inputRef={input => input && input.focus()}
+                  fullWidth
+                  placeholder={labelText}
+                  onChange={handleOnChange}
+                  onBlur={handleOnBlur}
+                  onKeyDown={handleInputKeyDown}
+                  value={textDescription}
+                  variant="outlined"
+                  size="small"
+                  multiline
+                  maxRows={4}
+                />
+                <Button
+                  size="medium"
+                  sx={{ my: 1, maxWidth: 200 }}
+                  variant="outlined"
+                  color="primary"
+                  fullWidth
+                  onClick={handleOnClick}
+                  onKeyDown={({ key }) => key === "Enter" && handleOnClick()}
+                  disabled={
+                    textDescription.length === 0 || textDescription.length > 200
+                  }
+                >
+                  Add Item
+                </Button>
+                <IconButton
+                  onClick={handleEscapeClick}>
+                  <ClearIcon />
+                </IconButton>
+              </>
+            }
             {provided.placeholder}
           </List>
         )}
@@ -237,5 +248,4 @@ const ColumnLayout: React.FC<IColumnLayoutProps> = ({
     </Box>
   );
 };
-
 export default ColumnLayout;

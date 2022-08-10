@@ -1,4 +1,3 @@
-import Typography from '@mui/material/Typography';
 import { useSelector } from 'react-redux';
 import { StoreState } from '../../redux/store';
 import { inProgressSlice } from '../../redux/slice/inProgress';
@@ -8,20 +7,24 @@ export function InProgressColumn() {
   const { inProgress } = useSelector((state: StoreState) => state);
 
   const {
-    actions: { completeStatus, remove, add, updateTextShowed },
+    actions: { completeStatus, remove, add, updateTextShowed, updateTextNote,
+      updateTitle },
   } = inProgressSlice;
 
   return (
     <>
-      <Typography mb={3}>All inProgress tasks: {inProgress.length}</Typography>
+      
       <ColumnLayout
+      updateTitle={updateTitle}
+        title={inProgress.title}
         droppableId='inProgress'
         labelText="Type 'in progress' item"
         completedHandler={completeStatus}
         removeHandler={remove}
         addHandler={add}
-        selectorState={inProgress}
+        cardList={inProgress.cardList}
         updateTextShowed={updateTextShowed}
+        updateTextNote={updateTextNote}
       />
     </>
   );

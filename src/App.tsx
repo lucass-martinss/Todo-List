@@ -10,7 +10,7 @@ import { todoSlice as todo } from './redux/slice/todo';
 import { inProgressSlice as inProgress } from './redux/slice/inProgress';
 import { doneSlice as done } from './redux/slice/done';
 import { StoreState } from './redux/store';
-import { IModel } from './types';
+import { IColumnState } from './redux/slice/customSlice';
 
 type TAllSilces = 'todo' | 'inProgress' | 'done';
 
@@ -32,8 +32,8 @@ function App() {
       );
     } else {
       const [filterState] = (
-        (appState as any)[source.droppableId] as IModel[]
-      ).filter(({ id }) => id === draggableId);
+        (appState as any)[source.droppableId] as IColumnState
+      ).cardList.filter(({ id }) => id === draggableId);
 
       dispatch(
         allSlices[source.droppableId as TAllSilces].actions.remove(draggableId)
@@ -50,7 +50,7 @@ function App() {
   return (
     <Container>
       <Typography textAlign='center' variant='h3' mt={3} mb={5}>
-        This is a ToDo APP with Redux
+        This is a ToDo APP
       </Typography>{' '}
       <Grid container spacing={3} justifyContent='center'>
         <DragDropContext onDragEnd={(res) => onDragEnd(res)}>

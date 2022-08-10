@@ -1,3 +1,3 @@
-import { createCustomSlice } from './customSlice';
+import { createColumnSlice } from './customSlice';
 
-export const doneSlice = createCustomSlice('done');
+export const doneSlice = createColumnSlice('done');

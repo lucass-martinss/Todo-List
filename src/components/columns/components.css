@@ -1,0 +1,7 @@
+.column{
+    background-color: rgb(229, 224, 224);
+    
+}
+div.MuiTextField-root.columnTitle{
+    border: none;
+}
